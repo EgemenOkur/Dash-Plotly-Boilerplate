@@ -77,6 +77,9 @@ def render_page_content(pathname):
         dcc.Store(id="store"),
         html.H1("Dynamically rendered tab content"),
         html.Hr(),
+        html.Div([
+            dcc.Slider(-5, 10, 1, value=-3)
+        ]),
         dbc.Button(
             "Regenerate graphs",
             color="primary",
