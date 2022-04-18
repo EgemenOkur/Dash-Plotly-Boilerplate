@@ -16,6 +16,7 @@ import dash
 import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.graph_objs as go
+import base64
 from dash import Input, Output, dcc, html
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -39,9 +40,13 @@ CONTENT_STYLE = {
     "padding": "2rem 1rem",
 }
 
+
+test_png = 'logo.png'
+test_base64 = base64.b64encode(open(test_png, 'rb').read()).decode('ascii')
+
 sidebar = html.Div(
     [
-        html.H2("Sidebar", className="display-4"),
+        html.Img(src='data:image/png;base64,{}'.format(test_base64), style={'height':'10%', 'width':'60%'}),
         html.Hr(),
         html.P(
             "A simple sidebar layout with navigation links", className="lead"
@@ -162,4 +167,4 @@ def generate_graphs(n):
     return {"scatter": scatter, "hist_1": hist_1, "hist_2": hist_2}
 
 if __name__ == "__main__":
-    app.run_server(port=8888)
+    app.run_server(port=8880)
