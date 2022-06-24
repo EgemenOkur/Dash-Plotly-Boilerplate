@@ -14,9 +14,11 @@ import time
 import dash
 import dash_bootstrap_components as dbc
 import numpy as np
+import pandas as pd
 import plotly.graph_objs as go
 import base64
 from dash import Input, Output, dcc, html
+from GetData.GetMarketData import YfinanceData
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -40,7 +42,7 @@ CONTENT_STYLE = {
 }
 
 
-test_png = 'logo.png'
+test_png = 'Main/Assets/logo.png'
 test_base64 = base64.b64encode(open(test_png, 'rb').read()).decode('ascii')
 
 sidebar = html.Div(
@@ -93,19 +95,20 @@ def render_page_content(pathname):
             id="tabs",
             active_tab="scatter",
         ),
-        html.Div(id="tab-content", className="p-4"),
         html.Div(
             [
-                dbc.Label("Y variable"),
+                dbc.Label("Select Stock"),
                 dcc.Dropdown(
                     id="y-variable",
                     options=[
-                        {"label": col, "value": col} for col in ['A','B']
+                        {"label": col, "value": col} for col in ['AAPL','TSLA']
                     ],
-                    value="sepal width (cm)",
+                    value="Z",
                 ),
             ]
         ),
+        html.Div(id="tab-content", className="p-4"),
+
     ],
 )
 
@@ -146,27 +149,46 @@ def render_tab_content(active_tab, data, value):
     return "No tab selected"
 
 
-@app.callback(Output("store", "data"), [Input("button", "n_clicks","y-variable"])
-def generate_graphs(n):
+@app.callback(Output("store", "data"), [Input("button", "n_clicks"), Input("y-variable", "value")])
+def generate_graphs(n,value):
     """
     This callback generates three simple graphs from random data.
     """
+
     if not n:
         # generate empty graphs when app loads
         return {k: go.Figure(data=[]) for k in ["scatter", "hist_1", "hist_2"]}
 
-    time.sleep(2)
     # generate 100 multivariate normal samples
-    data = np.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], 100)
+    df = pd.DataFrame(YfinanceData([value]))
+    # add Moving Averages (5day and 20day) to df
+    df['MA5'] = df['Close'].rolling(window=5).mean()
+    df['MA20'] = df['Close'].rolling(window=20).mean()
 
-    scatter = go.Figure(
-        data=[go.Scatter(x=data[:, 0], y=data[:, 1], mode="markers")]
-    )
-    hist_1 = go.Figure(data=[go.Histogram(x=data[:, 0])])
-    hist_2 = go.Figure(data=[go.Histogram(x=data[:, 1])])
+    scatter = go.Figure()
+
+    scatter.add_trace(go.Candlestick(x=df.index,
+                                 open=df['Open'],
+                                 high=df['High'],
+                                 low=df['Low'],
+                                 close=df['Close'], name='market data'))
+
+    # Add 5-day Moving Average Trace
+    MovingAverage5Scatter = scatter
+    MovingAverage5Scatter.add_trace(go.Scatter(x=df.index,
+                             y=df['MA5'],
+                             opacity=0.7,
+                             line=dict(color='blue', width=2),
+                             name='MA 5'))
+    # Add 20-day Moving Average Trace
+    MovingAverage5Scatter.add_trace(go.Scatter(x=df.index,
+                             y=df['MA20'],
+                             opacity=0.7,
+                             line=dict(color='orange', width=2),
+                             name='MA 20'))
 
     # save figures in a dictionary for sending to the dcc.Store
-    return {"scatter": scatter, "hist_1": hist_1, "hist_2": hist_2}
+    return {"scatter": scatter, "hist_1": MovingAverage5Scatter, "hist_2": MovingAverage5Scatter}
 
 if __name__ == "__main__":
     app.run_server(port=8880)
