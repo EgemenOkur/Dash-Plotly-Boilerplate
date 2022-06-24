@@ -11,7 +11,6 @@ For more details on building multi-page Dash applications, check out the Dash
 documentation: https://dash.plot.ly/urls
 """
 import time
-
 import dash
 import dash_bootstrap_components as dbc
 import numpy as np
@@ -75,7 +74,7 @@ def render_page_content(pathname):
         return html.Div(
     [
         dcc.Store(id="store"),
-        html.H1("Dynamically rendered tab content"),
+        html.H1("A Dashboard for Algorithmic Traders"),
         html.Hr(),
         html.Div([
             dcc.Slider(-5, 10, 1, value=-3)
@@ -147,7 +146,7 @@ def render_tab_content(active_tab, data, value):
     return "No tab selected"
 
 
-@app.callback(Output("store", "data"), [Input("button", "n_clicks")])
+@app.callback(Output("store", "data"), [Input("button", "n_clicks","y-variable"])
 def generate_graphs(n):
     """
     This callback generates three simple graphs from random data.
